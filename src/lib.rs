@@ -146,6 +146,40 @@ mod tests {
             _ => panic!("Expected ParseError"),
         }
     }
+
+    #[tokio::test]
+    async fn test_vibesort_str_with_mock() {
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        // Start a mock server
+        let mock_server = MockServer::start().await;
+        let base_url = mock_server.uri();
+
+        // Set up a mock response for string sorting
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "choices": [{
+                    "message": {
+                        "content": "[\"apple\",\"banana\",\"cherry\"]"
+                    }
+                }]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        // Create a Vibesort instance pointing to the mock server
+        let sorter = Vibesort::new("test-api-key", "test-model", base_url.as_str());
+
+        // Test the string sorting
+        let words = vec!["banana", "apple", "cherry"];
+        let result = sorter.sort_str(&words).await;
+
+        assert!(result.is_ok());
+        let sorted = result.unwrap();
+        assert_eq!(sorted, vec!["apple", "banana", "cherry"]);
+    }
 }
 
 /// Error types for vibesort operations.
@@ -426,5 +460,52 @@ impl<'a> Vibesort<'a> {
         })?;
 
         Ok(sorted)
+    }
+
+    /// Sorts an array of strings using an LLM.
+    ///
+    /// This is a convenience method specifically for sorting string arrays.
+    /// It accepts a slice of string references and returns a vector of owned strings.
+    ///
+    /// # Arguments
+    ///
+    /// * `items` - A slice of string references to sort
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(Vec<String>)` with the sorted array if successful, or an error
+    /// if the API call fails, the response is invalid, or parsing fails.
+    ///
+    /// # Errors
+    ///
+    /// This method can return the same errors as [`sort`](Self::sort):
+    /// - [`VibesortError::HttpError`] - Network or HTTP request errors
+    /// - [`VibesortError::ApiError`] - API returned an error status code
+    /// - [`VibesortError::InvalidResponse`] - Response format is invalid
+    /// - [`VibesortError::ParseError`] - LLM response cannot be parsed as a JSON array
+    /// - [`VibesortError::JsonError`] - JSON serialization/deserialization errors
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use vibesort_rs::Vibesort;
+    ///
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let sorter = Vibesort::new(
+    ///     "your-api-key",
+    ///     "gpt-3.5-turbo",
+    ///     "https://api.openai.com/v1",
+    /// );
+    ///
+    /// let words = vec!["banana", "apple", "cherry"];
+    /// let sorted = sorter.sort_str(&words).await?;
+    /// assert_eq!(sorted, vec!["apple", "banana", "cherry"]);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn sort_str(&self, items: &[&str]) -> Result<Vec<String>, VibesortError> {
+        // Convert &[&str] to Vec<String> for serialization
+        let string_vec: Vec<String> = items.iter().map(|s| s.to_string()).collect();
+        self.sort(&string_vec).await
     }
 }
