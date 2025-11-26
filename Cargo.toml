@@ -1,6 +1,6 @@
 [package]
 name = "vibesort-rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["ZyraX <oscarcoll.930714@gmail.com>"]
 license = "MIT"
