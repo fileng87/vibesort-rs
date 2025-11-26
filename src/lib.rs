@@ -8,7 +8,7 @@
 //!
 //! ## Features
 //!
-//! - Sort arrays of any type that implements `Serialize` and `Deserialize`
+//! - Sort arrays of any type that implements `Display`, `Serialize`, and `DeserializeOwned`
 //! - Support for any LLM API compatible with OpenAI's chat completion format
 //! - Comprehensive error handling with detailed error messages
 //! - Async/await support using Tokio
@@ -191,7 +191,8 @@ pub enum VibesortError {
     #[error("HTTP request failed: {0}")]
     HttpError(#[from] reqwest::Error),
 
-    /// An error occurred while parsing JSON (e.g., when serializing the input array).
+    /// An error occurred while parsing JSON (e.g., when serializing the input array
+    /// or deserializing the LLM response).
     #[error("JSON parsing failed: {0}")]
     JsonError(#[from] serde_json::Error),
 
@@ -312,7 +313,7 @@ impl<'a> Vibesort<'a> {
     /// * `items` - A slice of items to sort. Each item must implement:
     ///   - `Display` - For error messages
     ///   - `Serialize` - For serializing to JSON
-    ///   - `Deserialize<'de>` - For deserializing the sorted result
+    ///   - `DeserializeOwned` - For deserializing the sorted result
     ///
     /// # Returns
     ///
