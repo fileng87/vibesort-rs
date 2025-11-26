@@ -14,6 +14,8 @@ tokio = { version = "1.48", features = ["rt", "macros"] }
 
 ## Usage
 
+### Sorting Numbers
+
 ```rust
 use vibesort_rs::Vibesort;
 
@@ -28,6 +30,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let numbers = vec![3, 1, 4, 1, 5, 9, 2, 6];
     let sorted = sorter.sort(&numbers).await?;
     println!("{:?}", sorted); // [1, 1, 2, 3, 4, 5, 6, 9]
+
+    Ok(())
+}
+```
+
+### Sorting Strings
+
+For sorting string arrays, you can use the convenient `sort_str` method:
+
+```rust
+use vibesort_rs::Vibesort;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let sorter = Vibesort::new(
+        "your-api-key",
+        "gpt-5",
+        "https://api.openai.com/v1",
+    );
+
+    let words = vec!["banana", "apple", "cherry"];
+    let sorted = sorter.sort_str(&words).await?;
+    println!("{:?}", sorted); // ["apple", "banana", "cherry"]
 
     Ok(())
 }
