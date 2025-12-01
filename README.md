@@ -8,7 +8,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-vibesort-rs = "0.2.1"
+vibesort-rs = "0.2.2"
 tokio = { version = "1.48", features = ["rt", "macros"] }
 ```
 
