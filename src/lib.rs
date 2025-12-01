@@ -405,7 +405,7 @@ impl<'a> Vibesort<'a> {
         let client = reqwest::Client::new();
 
         // Prepare the request with system prompt and user prompt
-        let system_prompt = "You are a helpful assistant that sorts arrays. Sort the following JSON array and return ONLY the sorted JSON array, nothing else.";
+        let system_prompt = "You are a helpful assistant that sorts arrays. Sort the following JSON array with ascending order and return ONLY the sorted JSON array, nothing else.";
         let request = ChatRequest {
             model: self.model,
             messages: vec![
