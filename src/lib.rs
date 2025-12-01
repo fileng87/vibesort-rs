@@ -444,16 +444,32 @@ impl<'a> Vibesort<'a> {
         let chat_response: ChatResponse = response.json().await?;
 
         // Extract the sorted array from the LLM's response
-        let sorted_json = chat_response
+        let mut sorted_json = chat_response
             .choices
             .first()
             .ok_or(VibesortError::InvalidResponse)?
             .message
             .content
-            .trim();
+            .trim()
+            .to_string();
+
+        // Strip markdown code blocks if present (e.g., ```json ... ```)
+        if sorted_json.starts_with("```") {
+            // Remove the opening ``` and optional language identifier
+            if let Some(start_idx) = sorted_json.find('\n') {
+                sorted_json = sorted_json[start_idx + 1..].to_string();
+            } else {
+                // No newline, just remove the ```
+                sorted_json = sorted_json[3..].to_string();
+            }
+            // Remove the closing ```
+            if sorted_json.ends_with("```") {
+                sorted_json = sorted_json[..sorted_json.len() - 3].trim().to_string();
+            }
+        }
 
         // Parse the JSON array back to Vec<T>
-        let sorted: Vec<T> = serde_json::from_str(sorted_json).map_err(|e| {
+        let sorted: Vec<T> = serde_json::from_str(&sorted_json).map_err(|e| {
             VibesortError::ParseError(format!(
                 "Failed to parse as JSON array: {}\nLLM returned: {}",
                 e, sorted_json
